@@ -108,20 +108,6 @@ export function RequestDetailPage() {
     }
   };
 
-  const handleDownloadBody = () => {
-    if (request) {
-      const blob = new Blob([request.body], { type: "text/plain" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `request-${request.id}-body.txt`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
-  };
-
   const handleExport = () => {
     if (request) {
       window.open(api.getExportUrl(request.id), "_blank");
@@ -286,14 +272,9 @@ export function RequestDetailPage() {
                     </span>
                   )}
                 </CardTitle>
-                <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="icon-xs" onClick={handleCopyBody}>
-                    <HugeiconsIcon icon={Copy01Icon} strokeWidth={2} />
-                  </Button>
-                  <Button variant="ghost" size="icon-xs" onClick={handleDownloadBody}>
-                    <HugeiconsIcon icon={Download01Icon} strokeWidth={2} />
-                  </Button>
-                </div>
+                <Button variant="ghost" size="icon-xs" onClick={handleCopyBody}>
+                  <HugeiconsIcon icon={Copy01Icon} strokeWidth={2} />
+                </Button>
               </div>
             </CardHeader>
             <CardContent>
@@ -302,14 +283,10 @@ export function RequestDetailPage() {
                   <p className="text-sm text-muted-foreground">
                     Payload too large to display ({bodyLength.toLocaleString()} bytes)
                   </p>
-                  <div className="mt-3 flex justify-center gap-2">
+                  <div className="mt-3 flex justify-center">
                     <Button variant="outline" size="sm" onClick={handleCopyBody}>
                       <HugeiconsIcon icon={Copy01Icon} strokeWidth={2} />
                       Copy raw body
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={handleDownloadBody}>
-                      <HugeiconsIcon icon={Download01Icon} strokeWidth={2} />
-                      Download
                     </Button>
                   </div>
                 </div>
