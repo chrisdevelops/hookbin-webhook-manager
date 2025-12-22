@@ -58,7 +58,7 @@ router.all("/:id", async (req: Request, res: Response) => {
     }
 
     // Create request record
-    const requestId = `req_${uuidv4()}`;
+    const requestId = uuidv4();
     const now = new Date().toISOString();
 
     await db.insert(schema.requests).values({
