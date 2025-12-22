@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { WebhookRequest } from "@/types";
 import {
+  formatIp,
   formatRelativeTime,
+  formatTimestamp,
   getMethodColor,
   getStatusCodeColor,
 } from "@/lib/format";
@@ -78,11 +80,17 @@ export function RequestList({
             >
               <MethodBadge method={request.method} />
               <StatusCode code={request.statusCode} />
+              <span className="shrink-0 font-mono text-[10px] text-muted-foreground">
+                {request.id.slice(0, 8)}
+              </span>
               <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
-                {request.sourceIp}
+                {formatIp(request.sourceIp)}
               </span>
               <span className="shrink-0 font-mono text-[10px] text-muted-foreground">
                 {request.contentType}
+              </span>
+              <span className="shrink-0 text-[10px] text-muted-foreground">
+                {formatTimestamp(request.createdAt)}
               </span>
               <span className="shrink-0 text-[10px] text-muted-foreground">
                 {formatRelativeTime(request.createdAt)}
