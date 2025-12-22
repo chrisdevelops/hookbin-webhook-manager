@@ -122,7 +122,7 @@ export function AppSidebar() {
                 {webhooks.map((webhook) => {
                   const status = getWebhookStatus(webhook);
                   const isSelected = webhook.id === webhookId;
-                  const shortId = webhook.id.slice(3, 11);
+                  const shortId = webhook.id.slice(3);
 
                   return (
                     <SidebarMenuItem key={webhook.id}>
