@@ -89,3 +89,15 @@ export function prettyPrintJson(str: string): string {
     return str;
   }
 }
+
+export function formatIp(ip: string): string {
+  // Normalize IPv6 localhost to IPv4 for better readability
+  if (ip === '::1' || ip === '::ffff:127.0.0.1') {
+    return '127.0.0.1';
+  }
+  // Strip IPv6-mapped IPv4 prefix
+  if (ip.startsWith('::ffff:')) {
+    return ip.slice(7);
+  }
+  return ip;
+}
