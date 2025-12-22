@@ -103,7 +103,10 @@ export function RequestDetailPage() {
 
   const handleCopyBody = () => {
     if (request) {
-      navigator.clipboard.writeText(request.body);
+      const textToCopy = isValidJson(request.body)
+        ? prettyPrintJson(request.body)
+        : request.body;
+      navigator.clipboard.writeText(textToCopy);
       toast.success("Body copied", { duration: 1000 });
     }
   };
