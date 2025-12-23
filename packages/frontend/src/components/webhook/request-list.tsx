@@ -80,8 +80,8 @@ export function RequestList({
             >
               <MethodBadge method={request.method} />
               <StatusCode code={request.statusCode} />
-              <span className="shrink-0 font-mono text-[10px] text-muted-foreground">
-                {request.id.slice(0, 8)}
+              <span className="shrink-0 font-mono text-xs text-muted-foreground">
+                {request.id}
               </span>
               <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
                 {formatIp(request.sourceIp)}
