@@ -101,7 +101,7 @@ router.post("/", async (req, res) => {
       return;
     }
 
-    const id = `wh_${uuidv4()}`;
+    const id = uuidv4();
     const now = new Date().toISOString();
 
     await db.insert(schema.webhooks).values({
