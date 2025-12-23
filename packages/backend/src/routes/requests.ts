@@ -108,13 +108,24 @@ router.get("/requests/:requestId/export", async (req, res) => {
 
     const r = request[0];
 
+    // Parse body as JSON for JSON content types, with fallback to raw string
+    let parsedBody: unknown = r.body;
+    if (r.contentType === "application/json" && r.body) {
+      try {
+        parsedBody = JSON.parse(r.body);
+      } catch {
+        // Keep as raw string if JSON parsing fails
+        parsedBody = r.body;
+      }
+    }
+
     const exportData = {
       id: r.id,
       webhookId: r.webhookId,
       method: r.method,
       statusCode: r.statusCode,
       headers: JSON.parse(r.headers),
-      body: r.body,
+      body: parsedBody,
       contentType: r.contentType,
       sourceIp: r.sourceIp,
       timestamp: r.createdAt,
