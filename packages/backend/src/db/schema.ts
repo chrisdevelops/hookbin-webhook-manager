@@ -7,6 +7,7 @@ export const webhooks = sqliteTable("webhooks", {
   isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
+  lastViewedAt: text("last_viewed_at"), // Track when webhook was last viewed for unread status
 });
 
 export const requests = sqliteTable("requests", {

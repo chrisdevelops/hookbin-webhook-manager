@@ -1,10 +1,55 @@
 import { Router } from "express";
+import { v4 as uuidv4 } from "uuid";
 import { eq, desc, sql, and } from "drizzle-orm";
 import { db, schema } from "../db/index.js";
+import { sseManager } from "../lib/sse-manager.js";
 
 const router = Router();
 
 const PAGE_SIZE = 50;
+
+// SSE endpoint for real-time webhook request updates
+router.get("/webhooks/:webhookId/events", async (req, res) => {
+  const { webhookId } = req.params;
+
+  // Verify webhook exists
+  try {
+    const webhook = await db
+      .select()
+      .from(schema.webhooks)
+      .where(eq(schema.webhooks.id, webhookId))
+      .limit(1);
+
+    if (webhook.length === 0) {
+      res.status(404).json({ error: "not_found", message: "Webhook not found" });
+      return;
+    }
+  } catch (error) {
+    console.error("Failed to verify webhook:", error);
+    res.status(500).json({ error: "internal_error", message: "Failed to verify webhook" });
+    return;
+  }
+
+  // Set up SSE headers
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.setHeader("X-Accel-Buffering", "no");
+
+  // Generate client ID
+  const clientId = uuidv4();
+
+  // Add client to SSE manager
+  sseManager.addClient(webhookId, clientId, res);
+
+  // Send initial connection event
+  res.write(`event: connected\ndata: ${JSON.stringify({ clientId })}\n\n`);
+
+  // Handle client disconnect
+  req.on("close", () => {
+    sseManager.removeClient(webhookId, clientId);
+  });
+});
 
 // Get requests for a webhook with pagination
 router.get("/webhooks/:webhookId/requests", async (req, res) => {

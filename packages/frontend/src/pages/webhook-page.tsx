@@ -78,6 +78,49 @@ export function WebhookPage() {
     setCurrentPage(1);
   }, [webhookId]);
 
+  // Set up SSE connection for real-time updates
+  useEffect(() => {
+    if (!webhookId) return;
+
+    const eventSource = new EventSource(`/api/webhooks/${webhookId}/events`);
+
+    eventSource.addEventListener("connected", () => {
+      console.log("SSE connected for webhook:", webhookId);
+    });
+
+    eventSource.addEventListener("new-request", (event) => {
+      try {
+        const newRequest = JSON.parse(event.data) as WebhookRequest;
+
+        // Only add to the list if we're on page 1 (newest requests)
+        if (currentPage === 1) {
+          setRequests((prev) => [newRequest, ...prev]);
+        }
+
+        // Always update the total count
+        setTotalCount((prev) => {
+          const newCount = prev + 1;
+          // Recalculate total pages (50 requests per page)
+          setTotalPages(Math.ceil(newCount / 50));
+          return newCount;
+        });
+      } catch (error) {
+        console.error("Failed to parse SSE event:", error);
+      }
+    });
+
+    eventSource.onerror = (error) => {
+      console.error("SSE error:", error);
+      eventSource.close();
+    };
+
+    // Cleanup on unmount or webhook change
+    return () => {
+      eventSource.close();
+      console.log("SSE disconnected for webhook:", webhookId);
+    };
+  }, [webhookId, currentPage, totalCount]);
+
   const handleNameChange = useCallback(
     async (name: string) => {
       if (webhookId && name.length >= 3 && name.length <= 128) {

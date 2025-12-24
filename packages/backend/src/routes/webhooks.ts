@@ -2,8 +2,17 @@ import { Router } from "express";
 import { v4 as uuidv4 } from "uuid";
 import { eq, desc, sql } from "drizzle-orm";
 import { db, schema } from "../db/index.js";
+import { sseManager } from "../lib/sse-manager.js";
+
+console.log("Loading webhooks routes - VERSION 2 with SSE support");
 
 const router = Router();
+
+// Test route
+router.get("/test", async (_req, res) => {
+  console.log("TEST ROUTE HIT!");
+  res.json({ message: "Test route works!" });
+});
 
 // Get all webhooks with derived fields
 router.get("/", async (_req, res) => {
@@ -42,8 +51,54 @@ router.get("/", async (_req, res) => {
   }
 });
 
+// SSE endpoint for real-time webhook updates
+// Use a specific path segment before the ID to avoid routing conflicts
+router.get("/stream/:id", async (req, res) => {
+  const { id } = req.params;
+  console.log("SSE endpoint hit for webhook:", id);
+
+  // Verify webhook exists
+  try {
+    const webhook = await db
+      .select()
+      .from(schema.webhooks)
+      .where(eq(schema.webhooks.id, id))
+      .limit(1);
+
+    if (webhook.length === 0) {
+      res.status(404).json({ error: "not_found", message: "Webhook not found" });
+      return;
+    }
+  } catch (error) {
+    console.error("Failed to verify webhook:", error);
+    res.status(500).json({ error: "internal_error", message: "Failed to verify webhook" });
+    return;
+  }
+
+  // Set up SSE headers
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.setHeader("X-Accel-Buffering", "no"); // Disable buffering in nginx
+
+  // Generate client ID
+  const clientId = uuidv4();
+
+  // Add client to SSE manager
+  sseManager.addClient(id, clientId, res);
+
+  // Send initial connection event
+  res.write(`event: connected\ndata: ${JSON.stringify({ clientId })}\n\n`);
+
+  // Handle client disconnect
+  req.on("close", () => {
+    sseManager.removeClient(id, clientId);
+  });
+});
+
 // Get single webhook
 router.get("/:id", async (req, res) => {
+  console.log("/:id route hit with id:", req.params.id);
   try {
     const { id } = req.params;
     const webhook = await db
@@ -304,6 +359,15 @@ router.post("/:id/clear", async (req, res) => {
   } catch (error) {
     console.error("Failed to clear webhook history:", error);
     res.status(500).json({ error: "internal_error", message: "Failed to clear history" });
+  }
+});
+
+// Log all registered routes for debugging
+console.log("Registered webhooks routes:");
+router.stack.forEach((layer: any) => {
+  if (layer.route) {
+    const methods = Object.keys(layer.route.methods).join(",").toUpperCase();
+    console.log(`  ${methods} ${layer.route.path}`);
   }
 });
 

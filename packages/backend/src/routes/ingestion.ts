@@ -2,6 +2,7 @@ import { Router, type Request, type Response } from "express";
 import { v4 as uuidv4 } from "uuid";
 import { eq, desc, sql } from "drizzle-orm";
 import { db, schema } from "../db/index.js";
+import { sseManager } from "../lib/sse-manager.js";
 
 const router = Router();
 
@@ -61,7 +62,7 @@ router.all("/:id", async (req: Request, res: Response) => {
     const requestId = uuidv4();
     const now = new Date().toISOString();
 
-    await db.insert(schema.requests).values({
+    const newRequest = {
       id: requestId,
       webhookId: id,
       method,
@@ -71,7 +72,12 @@ router.all("/:id", async (req: Request, res: Response) => {
       contentType,
       sourceIp,
       createdAt: now,
-    });
+    };
+
+    await db.insert(schema.requests).values(newRequest);
+
+    // Emit SSE event to all connected clients for this webhook
+    sseManager.emit(id, "new-request", newRequest);
 
     // Enforce retention limit - delete oldest requests if over limit
     const countResult = await db
