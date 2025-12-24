@@ -99,6 +99,12 @@ class ApiClient {
     });
   }
 
+  async markWebhookViewed(id: string): Promise<void> {
+    return this.request<void>(`/webhooks/${id}/view`, {
+      method: "POST",
+    });
+  }
+
   // Requests
   async getRequests(
     webhookId: string,

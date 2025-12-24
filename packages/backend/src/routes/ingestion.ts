@@ -79,6 +79,12 @@ router.all("/:id", async (req: Request, res: Response) => {
     // Emit SSE event to all connected clients for this webhook
     sseManager.emit(id, "new-request", newRequest);
 
+    // Also emit to global SSE stream for sidebar unread indicators
+    sseManager.emit("__global__", "webhook-request", {
+      webhookId: id,
+      request: newRequest,
+    });
+
     // Enforce retention limit - delete oldest requests if over limit
     const countResult = await db
       .select({ count: sql<number>`count(*)` })

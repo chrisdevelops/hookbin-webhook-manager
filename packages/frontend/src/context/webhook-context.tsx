@@ -32,6 +32,8 @@ interface WebhookContextType {
   deleteWebhook: (id: string) => Promise<void>;
   toggleWebhookActive: (id: string) => Promise<void>;
   clearWebhookHistory: (id: string) => Promise<void>;
+  markWebhookViewed: (id: string) => Promise<void>;
+  setCurrentWebhook: (id: string | null) => void;
   getRequests: (webhookId: string, page: number) => Promise<PaginatedRequests>;
   getRequestById: (requestId: string) => Promise<WebhookRequest | undefined>;
 }
@@ -42,6 +44,7 @@ export function WebhookProvider({ children }: { children: ReactNode }) {
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentWebhookId, setCurrentWebhookId] = useState<string | null>(null);
 
   const sortWebhooks = (webhooks: Webhook[]): Webhook[] => {
     return [...webhooks].sort((a, b) => {
@@ -74,6 +77,53 @@ export function WebhookProvider({ children }: { children: ReactNode }) {
     };
     loadWebhooks();
   }, [refreshWebhooks]);
+
+  // Set up global SSE connection to listen for new requests on all webhooks
+  useEffect(() => {
+    const eventSource = new EventSource("/api/events");
+
+    eventSource.addEventListener("connected", () => {
+      console.log("Global SSE connected");
+    });
+
+    eventSource.addEventListener("webhook-request", (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        const { webhookId } = data;
+
+        // Update the webhook's hasUnread status
+        // Only mark as unread if the user is NOT currently viewing this webhook
+        setWebhooks((prev) =>
+          sortWebhooks(
+            prev.map((w) => {
+              if (w.id === webhookId) {
+                // If this is the currently viewed webhook, don't mark as unread
+                const isCurrentlyViewing = currentWebhookId === webhookId;
+                return {
+                  ...w,
+                  hasUnread: isCurrentlyViewing ? false : true,
+                  lastRequestAt: data.request.createdAt,
+                };
+              }
+              return w;
+            })
+          )
+        );
+      } catch (error) {
+        console.error("Failed to parse global SSE event:", error);
+      }
+    });
+
+    eventSource.onerror = (error) => {
+      console.error("Global SSE error:", error);
+      eventSource.close();
+    };
+
+    return () => {
+      eventSource.close();
+      console.log("Global SSE disconnected");
+    };
+  }, [currentWebhookId]);
 
   const getWebhook = useCallback(
     (id: string) => webhooks.find((w) => w.id === id),
@@ -131,6 +181,17 @@ export function WebhookProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
+  const markWebhookViewed = useCallback(async (id: string) => {
+    await api.markWebhookViewed(id);
+    setWebhooks((prev) =>
+      sortWebhooks(prev.map((w) => (w.id === id ? { ...w, hasUnread: false } : w)))
+    );
+  }, []);
+
+  const setCurrentWebhook = useCallback((id: string | null) => {
+    setCurrentWebhookId(id);
+  }, []);
+
   const getRequests = useCallback(
     async (webhookId: string, page: number): Promise<PaginatedRequests> => {
       const response = await api.getRequests(webhookId, page);
@@ -167,6 +228,8 @@ export function WebhookProvider({ children }: { children: ReactNode }) {
         deleteWebhook,
         toggleWebhookActive,
         clearWebhookHistory,
+        markWebhookViewed,
+        setCurrentWebhook,
         getRequests,
         getRequestById,
       }}

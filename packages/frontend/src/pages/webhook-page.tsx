@@ -40,6 +40,8 @@ export function WebhookPage() {
     deleteWebhook,
     toggleWebhookActive,
     clearWebhookHistory,
+    markWebhookViewed,
+    setCurrentWebhook,
     getRequests,
   } = useWebhooks();
 
@@ -77,6 +79,24 @@ export function WebhookPage() {
   useEffect(() => {
     setCurrentPage(1);
   }, [webhookId]);
+
+  // Set current webhook and mark as viewed when opening it
+  useEffect(() => {
+    if (webhookId) {
+      // Tell the context which webhook is currently being viewed
+      setCurrentWebhook(webhookId);
+
+      // Mark as viewed
+      markWebhookViewed(webhookId).catch((error) => {
+        console.error("Failed to mark webhook as viewed:", error);
+      });
+    }
+
+    // Clear current webhook when unmounting or changing webhooks
+    return () => {
+      setCurrentWebhook(null);
+    };
+  }, [webhookId, markWebhookViewed, setCurrentWebhook]);
 
   // Set up SSE connection for real-time updates
   useEffect(() => {

@@ -25,7 +25,8 @@ sqlite.exec(`
     description TEXT NOT NULL DEFAULT '',
     is_active INTEGER NOT NULL DEFAULT 1,
     created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL
+    updated_at TEXT NOT NULL,
+    last_viewed_at TEXT
   );
 
   CREATE TABLE IF NOT EXISTS requests (
@@ -43,6 +44,17 @@ sqlite.exec(`
   CREATE INDEX IF NOT EXISTS idx_requests_webhook_id ON requests(webhook_id);
   CREATE INDEX IF NOT EXISTS idx_requests_created_at ON requests(created_at);
 `);
+
+// Migration: Add last_viewed_at column if it doesn't exist
+try {
+  sqlite.exec(`ALTER TABLE webhooks ADD COLUMN last_viewed_at TEXT;`);
+  console.log("Migration: Added last_viewed_at column to webhooks table");
+} catch (error: any) {
+  // Column might already exist, which is fine
+  if (!error.message?.includes("duplicate column name")) {
+    console.error("Migration error:", error);
+  }
+}
 
 export const db = drizzle(sqlite, { schema });
 export { schema };

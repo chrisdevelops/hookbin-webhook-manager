@@ -34,12 +34,20 @@ router.get("/", async (_req, res) => {
           .from(schema.requests)
           .where(eq(schema.requests.webhookId, webhook.id));
 
+        // Calculate hasUnread: true if there are requests newer than lastViewedAt
+        let hasUnread = false;
+        if (lastRequest[0]?.createdAt && webhook.lastViewedAt) {
+          hasUnread = new Date(lastRequest[0].createdAt) > new Date(webhook.lastViewedAt);
+        } else if (lastRequest[0]?.createdAt && !webhook.lastViewedAt) {
+          // Never viewed but has requests = unread
+          hasUnread = true;
+        }
+
         return {
           ...webhook,
           lastRequestAt: lastRequest[0]?.createdAt || null,
           requestCount: requestCount[0]?.count || 0,
-          // TODO: Implement proper unread tracking
-          hasUnread: false,
+          hasUnread,
         };
       })
     );
@@ -359,6 +367,34 @@ router.post("/:id/clear", async (req, res) => {
   } catch (error) {
     console.error("Failed to clear webhook history:", error);
     res.status(500).json({ error: "internal_error", message: "Failed to clear history" });
+  }
+});
+
+// Mark webhook as viewed (for unread tracking)
+router.post("/:id/view", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const existing = await db
+      .select()
+      .from(schema.webhooks)
+      .where(eq(schema.webhooks.id, id))
+      .limit(1);
+
+    if (existing.length === 0) {
+      res.status(404).json({ error: "not_found", message: "Webhook not found" });
+      return;
+    }
+
+    await db
+      .update(schema.webhooks)
+      .set({ lastViewedAt: new Date().toISOString() })
+      .where(eq(schema.webhooks.id, id));
+
+    res.status(204).send();
+  } catch (error) {
+    console.error("Failed to mark webhook as viewed:", error);
+    res.status(500).json({ error: "internal_error", message: "Failed to mark as viewed" });
   }
 });
 
