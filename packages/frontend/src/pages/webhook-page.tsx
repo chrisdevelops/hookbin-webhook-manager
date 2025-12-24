@@ -30,7 +30,6 @@ import { useWebhooks } from "@/context/webhook-context";
 import { getWebhookUrl, getWebhookStatus, type WebhookRequest } from "@/types";
 import { WebhookHeader } from "@/components/webhook/webhook-header";
 import { RequestList } from "@/components/webhook/request-list";
-import { api } from "@/lib/api";
 
 export function WebhookPage() {
   const { webhookId } = useParams<{ webhookId: string }>();
@@ -220,26 +219,6 @@ export function WebhookPage() {
     [webhookId, navigate]
   );
 
-  const handleToggleFavorite = useCallback(
-    async (requestId: string, isFavorite: boolean) => {
-      // Optimistic update
-      setRequests((prev) =>
-        prev.map((r) => (r.id === requestId ? { ...r, isFavorite } : r))
-      );
-
-      try {
-        await api.toggleRequestFavorite(requestId, isFavorite);
-      } catch (error) {
-        // Rollback on failure
-        setRequests((prev) =>
-          prev.map((r) => (r.id === requestId ? { ...r, isFavorite: !isFavorite } : r))
-        );
-        console.error("Failed to toggle favorite:", error);
-      }
-    },
-    []
-  );
-
   if (!webhook) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -303,7 +282,6 @@ export function WebhookPage() {
         currentPage={currentPage}
         onPageChange={setCurrentPage}
         onRequestClick={handleRequestClick}
-        onToggleFavorite={handleToggleFavorite}
         isLoading={loadingRequests}
       />
 

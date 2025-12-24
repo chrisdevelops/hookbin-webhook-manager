@@ -22,7 +22,6 @@ interface RequestListProps {
   currentPage: number;
   onPageChange: (page: number) => void;
   onRequestClick: (requestId: string) => void;
-  onToggleFavorite?: (requestId: string, isFavorite: boolean) => void;
   isLoading?: boolean;
 }
 
@@ -49,7 +48,6 @@ export function RequestList({
   currentPage,
   onPageChange,
   onRequestClick,
-  onToggleFavorite,
   isLoading = false,
 }: RequestListProps) {
   if (isLoading) {
@@ -76,47 +74,36 @@ export function RequestList({
       <ScrollArea className="flex-1">
         <div className="divide-y">
           {requests.map((request) => (
-            <div
+            <button
               key={request.id}
-              className="flex w-full items-center gap-4 px-6 py-3 hover:bg-muted/50"
+              onClick={() => onRequestClick(request.id)}
+              className="flex w-full items-center gap-4 px-6 py-3 text-left transition-colors hover:bg-muted/50"
             >
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onToggleFavorite?.(request.id, !request.isFavorite);
-                }}
-                className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
-                title={request.isFavorite ? "Unfavorite" : "Favorite"}
-              >
+              {request.isFavorite && (
                 <HugeiconsIcon
                   icon={StarIcon}
                   strokeWidth={2}
-                  className={request.isFavorite ? "fill-yellow-500 text-yellow-500" : ""}
+                  className="h-3 w-3 shrink-0 fill-yellow-500 text-yellow-500 opacity-60"
                 />
-              </button>
-              <button
-                onClick={() => onRequestClick(request.id)}
-                className="flex min-w-0 flex-1 items-center gap-4 text-left"
-              >
-                <MethodBadge method={request.method} />
-                <StatusCode code={request.statusCode} />
-                <span className="shrink-0 font-mono text-xs text-muted-foreground">
-                  {request.id}
-                </span>
-                <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
-                  {formatIp(request.sourceIp)}
-                </span>
-                <span className="shrink-0 font-mono text-[10px] text-muted-foreground">
-                  {request.contentType}
-                </span>
-                <span className="shrink-0 text-[10px] text-muted-foreground">
-                  {formatTimestamp(request.createdAt)}
-                </span>
-                <span className="shrink-0 text-[10px] text-muted-foreground">
-                  {formatRelativeTime(request.createdAt)}
-                </span>
-              </button>
-            </div>
+              )}
+              <MethodBadge method={request.method} />
+              <StatusCode code={request.statusCode} />
+              <span className="shrink-0 font-mono text-xs text-muted-foreground">
+                {request.id}
+              </span>
+              <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
+                {formatIp(request.sourceIp)}
+              </span>
+              <span className="shrink-0 font-mono text-[10px] text-muted-foreground">
+                {request.contentType}
+              </span>
+              <span className="shrink-0 text-[10px] text-muted-foreground">
+                {formatTimestamp(request.createdAt)}
+              </span>
+              <span className="shrink-0 text-[10px] text-muted-foreground">
+                {formatRelativeTime(request.createdAt)}
+              </span>
+            </button>
           ))}
         </div>
       </ScrollArea>
