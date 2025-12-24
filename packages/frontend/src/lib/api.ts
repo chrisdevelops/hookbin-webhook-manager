@@ -119,6 +119,16 @@ class ApiClient {
     return this.request<WebhookRequest>(`/requests/${requestId}`);
   }
 
+  async toggleRequestFavorite(
+    requestId: string,
+    isFavorite: boolean
+  ): Promise<WebhookRequest> {
+    return this.request<WebhookRequest>(`/requests/${requestId}/favorite`, {
+      method: "PATCH",
+      body: JSON.stringify({ isFavorite }),
+    });
+  }
+
   getExportUrl(requestId: string): string {
     return `${API_BASE}/requests/${requestId}/export`;
   }

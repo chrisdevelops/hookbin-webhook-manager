@@ -2,6 +2,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ArrowLeft01Icon,
   ArrowRight01Icon,
+  StarIcon,
 } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -21,6 +22,7 @@ interface RequestListProps {
   currentPage: number;
   onPageChange: (page: number) => void;
   onRequestClick: (requestId: string) => void;
+  onToggleFavorite?: (requestId: string, isFavorite: boolean) => void;
   isLoading?: boolean;
 }
 
@@ -47,6 +49,7 @@ export function RequestList({
   currentPage,
   onPageChange,
   onRequestClick,
+  onToggleFavorite,
   isLoading = false,
 }: RequestListProps) {
   if (isLoading) {
@@ -73,29 +76,47 @@ export function RequestList({
       <ScrollArea className="flex-1">
         <div className="divide-y">
           {requests.map((request) => (
-            <button
+            <div
               key={request.id}
-              onClick={() => onRequestClick(request.id)}
-              className="flex w-full items-center gap-4 px-6 py-3 text-left transition-colors hover:bg-muted/50"
+              className="flex w-full items-center gap-4 px-6 py-3 hover:bg-muted/50"
             >
-              <MethodBadge method={request.method} />
-              <StatusCode code={request.statusCode} />
-              <span className="shrink-0 font-mono text-xs text-muted-foreground">
-                {request.id}
-              </span>
-              <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
-                {formatIp(request.sourceIp)}
-              </span>
-              <span className="shrink-0 font-mono text-[10px] text-muted-foreground">
-                {request.contentType}
-              </span>
-              <span className="shrink-0 text-[10px] text-muted-foreground">
-                {formatTimestamp(request.createdAt)}
-              </span>
-              <span className="shrink-0 text-[10px] text-muted-foreground">
-                {formatRelativeTime(request.createdAt)}
-              </span>
-            </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleFavorite?.(request.id, !request.isFavorite);
+                }}
+                className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+                title={request.isFavorite ? "Unfavorite" : "Favorite"}
+              >
+                <HugeiconsIcon
+                  icon={StarIcon}
+                  strokeWidth={2}
+                  className={request.isFavorite ? "fill-yellow-500 text-yellow-500" : ""}
+                />
+              </button>
+              <button
+                onClick={() => onRequestClick(request.id)}
+                className="flex min-w-0 flex-1 items-center gap-4 text-left"
+              >
+                <MethodBadge method={request.method} />
+                <StatusCode code={request.statusCode} />
+                <span className="shrink-0 font-mono text-xs text-muted-foreground">
+                  {request.id}
+                </span>
+                <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
+                  {formatIp(request.sourceIp)}
+                </span>
+                <span className="shrink-0 font-mono text-[10px] text-muted-foreground">
+                  {request.contentType}
+                </span>
+                <span className="shrink-0 text-[10px] text-muted-foreground">
+                  {formatTimestamp(request.createdAt)}
+                </span>
+                <span className="shrink-0 text-[10px] text-muted-foreground">
+                  {formatRelativeTime(request.createdAt)}
+                </span>
+              </button>
+            </div>
           ))}
         </div>
       </ScrollArea>

@@ -22,6 +22,7 @@ export const requests = sqliteTable("requests", {
   contentType: text("content_type").notNull(),
   sourceIp: text("source_ip").notNull(),
   createdAt: text("created_at").notNull(),
+  isFavorite: integer("is_favorite", { mode: "boolean" }).notNull().default(false),
 });
 
 export type Webhook = typeof webhooks.$inferSelect;

@@ -7,6 +7,7 @@ import {
   Copy01Icon,
   Download01Icon,
   ArrowExpand01Icon,
+  StarIcon,
 } from "@hugeicons/core-free-icons";
 import {
   Breadcrumb,
@@ -45,6 +46,7 @@ export function RequestDetailPage() {
   const [request, setRequest] = useState<WebhookRequest | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
   const [showFullBody, setShowFullBody] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
 
   const webhook = webhookId ? getWebhook(webhookId) : undefined;
 
@@ -57,6 +59,7 @@ export function RequestDetailPage() {
       try {
         const data = await api.getRequest(requestId);
         setRequest(data);
+        setIsFavorite(data.isFavorite);
       } catch (error) {
         console.error("Failed to load request:", error);
         setRequest(undefined);
@@ -117,6 +120,28 @@ export function RequestDetailPage() {
     }
   };
 
+  const handleToggleFavorite = async () => {
+    if (!request) return;
+
+    const newFavoriteState = !isFavorite;
+
+    // Optimistic update
+    setIsFavorite(newFavoriteState);
+
+    try {
+      await api.toggleRequestFavorite(request.id, newFavoriteState);
+      toast.success(
+        newFavoriteState ? "Request favorited" : "Favorite removed",
+        { duration: 1000 }
+      );
+    } catch (error) {
+      // Rollback on failure
+      setIsFavorite(!newFavoriteState);
+      toast.error("Failed to update favorite status");
+      console.error("Failed to toggle favorite:", error);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -167,6 +192,18 @@ export function RequestDetailPage() {
         </Breadcrumb>
 
         <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={handleToggleFavorite}
+            title={isFavorite ? "Unfavorite request" : "Favorite request"}
+          >
+            <HugeiconsIcon
+              icon={StarIcon}
+              strokeWidth={2}
+              className={isFavorite ? "fill-yellow-500 text-yellow-500" : ""}
+            />
+          </Button>
           <Button
             variant="ghost"
             size="icon-sm"

@@ -21,6 +21,7 @@ export interface WebhookRequest {
   contentType: string;
   sourceIp: string;
   createdAt: string;
+  isFavorite: boolean;
 }
 
 export type WebhookStatus = "active" | "active-unread" | "inactive";

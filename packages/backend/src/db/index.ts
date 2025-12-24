@@ -38,7 +38,8 @@ sqlite.exec(`
     body TEXT NOT NULL,
     content_type TEXT NOT NULL,
     source_ip TEXT NOT NULL,
-    created_at TEXT NOT NULL
+    created_at TEXT NOT NULL,
+    is_favorite INTEGER NOT NULL DEFAULT 0
   );
 
   CREATE INDEX IF NOT EXISTS idx_requests_webhook_id ON requests(webhook_id);
@@ -54,6 +55,25 @@ try {
   if (!error.message?.includes("duplicate column name")) {
     console.error("Migration error:", error);
   }
+}
+
+// Migration: Add is_favorite column to requests
+try {
+  sqlite.exec(`ALTER TABLE requests ADD COLUMN is_favorite INTEGER NOT NULL DEFAULT 0;`);
+  console.log("Migration: Added is_favorite column to requests table");
+} catch (error: any) {
+  if (!error.message?.includes("duplicate column name")) {
+    console.error("Migration error:", error);
+  }
+}
+
+// Create composite index for efficient favorite-first sorting
+try {
+  sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_requests_favorite_created
+               ON requests(webhook_id, is_favorite DESC, created_at DESC);`);
+  console.log("Migration: Added composite index for favorite sorting");
+} catch (error: any) {
+  console.error("Index creation error:", error);
 }
 
 export const db = drizzle(sqlite, { schema });

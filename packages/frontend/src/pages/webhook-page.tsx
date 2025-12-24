@@ -30,6 +30,7 @@ import { useWebhooks } from "@/context/webhook-context";
 import { getWebhookUrl, getWebhookStatus, type WebhookRequest } from "@/types";
 import { WebhookHeader } from "@/components/webhook/webhook-header";
 import { RequestList } from "@/components/webhook/request-list";
+import { api } from "@/lib/api";
 
 export function WebhookPage() {
   const { webhookId } = useParams<{ webhookId: string }>();
@@ -114,7 +115,18 @@ export function WebhookPage() {
 
         // Only add to the list if we're on page 1 (newest requests)
         if (currentPage === 1) {
-          setRequests((prev) => [newRequest, ...prev]);
+          setRequests((prev) => {
+            // Insert new request and re-sort: favorites first, then by date
+            const updated = [newRequest, ...prev];
+            return updated.sort((a, b) => {
+              // First compare by favorite status
+              if (a.isFavorite !== b.isFavorite) {
+                return a.isFavorite ? -1 : 1;
+              }
+              // Then by creation date (newest first)
+              return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+            });
+          });
         }
 
         // Always update the total count
@@ -208,6 +220,26 @@ export function WebhookPage() {
     [webhookId, navigate]
   );
 
+  const handleToggleFavorite = useCallback(
+    async (requestId: string, isFavorite: boolean) => {
+      // Optimistic update
+      setRequests((prev) =>
+        prev.map((r) => (r.id === requestId ? { ...r, isFavorite } : r))
+      );
+
+      try {
+        await api.toggleRequestFavorite(requestId, isFavorite);
+      } catch (error) {
+        // Rollback on failure
+        setRequests((prev) =>
+          prev.map((r) => (r.id === requestId ? { ...r, isFavorite: !isFavorite } : r))
+        );
+        console.error("Failed to toggle favorite:", error);
+      }
+    },
+    []
+  );
+
   if (!webhook) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -271,6 +303,7 @@ export function WebhookPage() {
         currentPage={currentPage}
         onPageChange={setCurrentPage}
         onRequestClick={handleRequestClick}
+        onToggleFavorite={handleToggleFavorite}
         isLoading={loadingRequests}
       />
 

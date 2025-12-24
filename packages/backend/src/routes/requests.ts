@@ -84,7 +84,7 @@ router.get("/webhooks/:webhookId/requests", async (req, res) => {
       .select()
       .from(schema.requests)
       .where(eq(schema.requests.webhookId, webhookId))
-      .orderBy(desc(schema.requests.createdAt))
+      .orderBy(desc(schema.requests.isFavorite), desc(schema.requests.createdAt))
       .limit(PAGE_SIZE)
       .offset(offset);
 
@@ -132,6 +132,58 @@ router.get("/requests/:requestId", async (req, res) => {
   } catch (error) {
     console.error("Failed to fetch request:", error);
     res.status(500).json({ error: "internal_error", message: "Failed to fetch request" });
+  }
+});
+
+// Toggle favorite status of a request
+router.patch("/requests/:requestId/favorite", async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const { isFavorite } = req.body;
+
+    if (typeof isFavorite !== "boolean") {
+      res.status(400).json({
+        error: "validation_error",
+        message: "isFavorite must be a boolean"
+      });
+      return;
+    }
+
+    // Check if request exists
+    const request = await db
+      .select()
+      .from(schema.requests)
+      .where(eq(schema.requests.id, requestId))
+      .limit(1);
+
+    if (request.length === 0) {
+      res.status(404).json({ error: "not_found", message: "Request not found" });
+      return;
+    }
+
+    // Update favorite status
+    await db
+      .update(schema.requests)
+      .set({ isFavorite })
+      .where(eq(schema.requests.id, requestId));
+
+    // Return updated request
+    const updated = await db
+      .select()
+      .from(schema.requests)
+      .where(eq(schema.requests.id, requestId))
+      .limit(1);
+
+    res.json({
+      ...updated[0],
+      headers: JSON.parse(updated[0].headers),
+    });
+  } catch (error) {
+    console.error("Failed to toggle favorite:", error);
+    res.status(500).json({
+      error: "internal_error",
+      message: "Failed to toggle favorite status"
+    });
   }
 });
 
