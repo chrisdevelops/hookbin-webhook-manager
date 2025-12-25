@@ -3,19 +3,20 @@ import { v4 as uuidv4 } from "uuid";
 import { eq, desc, sql } from "drizzle-orm";
 import { db, schema } from "../db/index.js";
 import { sseManager } from "../lib/sse-manager.js";
+import { requireAuth } from "../middleware/auth.js";
 
 console.log("Loading webhooks routes - VERSION 2 with SSE support");
 
 const router = Router();
 
 // Test route
-router.get("/test", async (_req, res) => {
+router.get("/test", requireAuth, async (_req, res) => {
   console.log("TEST ROUTE HIT!");
   res.json({ message: "Test route works!" });
 });
 
 // Get all webhooks with derived fields
-router.get("/", async (_req, res) => {
+router.get("/", requireAuth, async (_req, res) => {
   try {
     const webhooks = await db.select().from(schema.webhooks);
 
@@ -61,7 +62,7 @@ router.get("/", async (_req, res) => {
 
 // SSE endpoint for real-time webhook updates
 // Use a specific path segment before the ID to avoid routing conflicts
-router.get("/stream/:id", async (req, res) => {
+router.get("/stream/:id", requireAuth, async (req, res) => {
   const { id } = req.params;
   console.log("SSE endpoint hit for webhook:", id);
 
@@ -105,7 +106,7 @@ router.get("/stream/:id", async (req, res) => {
 });
 
 // Get single webhook
-router.get("/:id", async (req, res) => {
+router.get("/:id", requireAuth, async (req, res) => {
   console.log("/:id route hit with id:", req.params.id);
   try {
     const { id } = req.params;
@@ -139,7 +140,7 @@ router.get("/:id", async (req, res) => {
 });
 
 // Create webhook
-router.post("/", async (req, res) => {
+router.post("/", requireAuth, async (req, res) => {
   try {
     const { name, description = "" } = req.body;
 
@@ -194,7 +195,7 @@ router.post("/", async (req, res) => {
 });
 
 // Update webhook
-router.patch("/:id", async (req, res) => {
+router.patch("/:id", requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { name, description } = req.body;
@@ -252,7 +253,7 @@ router.patch("/:id", async (req, res) => {
 });
 
 // Delete webhook
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -278,7 +279,7 @@ router.delete("/:id", async (req, res) => {
 });
 
 // Enable webhook
-router.post("/:id/enable", async (req, res) => {
+router.post("/:id/enable", requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -312,7 +313,7 @@ router.post("/:id/enable", async (req, res) => {
 });
 
 // Disable webhook
-router.post("/:id/disable", async (req, res) => {
+router.post("/:id/disable", requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -346,7 +347,7 @@ router.post("/:id/disable", async (req, res) => {
 });
 
 // Clear webhook history
-router.post("/:id/clear", async (req, res) => {
+router.post("/:id/clear", requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -371,7 +372,7 @@ router.post("/:id/clear", async (req, res) => {
 });
 
 // Mark webhook as viewed (for unread tracking)
-router.post("/:id/view", async (req, res) => {
+router.post("/:id/view", requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
