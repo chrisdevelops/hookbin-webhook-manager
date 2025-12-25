@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { v4 as uuidv4 } from "uuid";
-import { eq, desc, sql, and } from "drizzle-orm";
+import { eq, desc, sql, and, or, like, gte, lte } from "drizzle-orm";
 import { db, schema } from "../db/index.js";
 import { sseManager } from "../lib/sse-manager.js";
 
@@ -51,11 +51,17 @@ router.get("/webhooks/:webhookId/events", async (req, res) => {
   });
 });
 
-// Get requests for a webhook with pagination
+// Get requests for a webhook with pagination, search, and filters
 router.get("/webhooks/:webhookId/requests", async (req, res) => {
   try {
     const { webhookId } = req.params;
     const page = Math.max(1, parseInt(req.query.page as string) || 1);
+
+    // Parse search and filter query parameters
+    const search = (req.query.search as string)?.trim() || "";
+    const method = (req.query.method as string)?.toUpperCase() || "";
+    const startDate = (req.query.startDate as string) || "";
+    const endDate = (req.query.endDate as string) || "";
 
     // Verify webhook exists
     const webhook = await db
@@ -69,21 +75,56 @@ router.get("/webhooks/:webhookId/requests", async (req, res) => {
       return;
     }
 
-    // Get total count
+    // Build filter conditions
+    const conditions = [eq(schema.requests.webhookId, webhookId)];
+
+    // Full-text search on headers and body (case-insensitive via SQLite LIKE)
+    if (search) {
+      // Limit search query length to prevent abuse
+      const searchTerm = search.slice(0, 500);
+      const searchPattern = `%${searchTerm}%`;
+      conditions.push(
+        or(
+          like(schema.requests.headers, searchPattern),
+          like(schema.requests.body, searchPattern)
+        )!
+      );
+    }
+
+    // HTTP method filter
+    if (method) {
+      conditions.push(eq(schema.requests.method, method));
+    }
+
+    // Date range filters (createdAt is stored as ISO string)
+    if (startDate) {
+      // Add time component to start at the very beginning of the day
+      const startDateWithTime = startDate.includes("T") ? startDate : `${startDate}T00:00:00.000Z`;
+      conditions.push(gte(schema.requests.createdAt, startDateWithTime));
+    }
+    if (endDate) {
+      // Add time component to include the entire end date (end of day)
+      const endDateWithTime = endDate.includes("T") ? endDate : `${endDate}T23:59:59.999Z`;
+      conditions.push(lte(schema.requests.createdAt, endDateWithTime));
+    }
+
+    const whereClause = and(...conditions);
+
+    // Get total count with filters applied
     const countResult = await db
       .select({ count: sql<number>`count(*)` })
       .from(schema.requests)
-      .where(eq(schema.requests.webhookId, webhookId));
+      .where(whereClause);
 
     const totalCount = countResult[0]?.count || 0;
     const totalPages = Math.ceil(totalCount / PAGE_SIZE) || 1;
     const offset = (page - 1) * PAGE_SIZE;
 
-    // Get paginated requests
+    // Get paginated requests with filters applied
     const requests = await db
       .select()
       .from(schema.requests)
-      .where(eq(schema.requests.webhookId, webhookId))
+      .where(whereClause)
       .orderBy(desc(schema.requests.isFavorite), desc(schema.requests.createdAt))
       .limit(PAGE_SIZE)
       .offset(offset);

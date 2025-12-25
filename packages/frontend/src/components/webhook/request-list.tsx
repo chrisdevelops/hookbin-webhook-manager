@@ -6,6 +6,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { WebhookRequest } from "@/types";
 import {
   formatIp,
@@ -23,6 +24,8 @@ interface RequestListProps {
   onPageChange: (page: number) => void;
   onRequestClick: (requestId: string) => void;
   isLoading?: boolean;
+  hasActiveFilters?: boolean;
+  onClearFilters?: () => void;
 }
 
 function MethodBadge({ method }: { method: string }) {
@@ -41,6 +44,41 @@ function StatusCode({ code }: { code: number }) {
   return <span className={`font-mono text-xs ${colorClass}`}>{code}</span>;
 }
 
+function RequestRowSkeleton() {
+  return (
+    <div className="flex w-full items-center gap-4 px-6 py-3">
+      {/* Method badge skeleton */}
+      <Skeleton className="h-5 w-14 shrink-0" />
+      {/* Status code skeleton */}
+      <Skeleton className="h-4 w-8 shrink-0" />
+      {/* Request ID skeleton */}
+      <Skeleton className="h-4 w-24 shrink-0" />
+      {/* IP address skeleton */}
+      <Skeleton className="h-4 min-w-0 flex-1" />
+      {/* Content type skeleton */}
+      <Skeleton className="h-3 w-24 shrink-0" />
+      {/* Timestamp skeleton */}
+      <Skeleton className="h-3 w-16 shrink-0" />
+      {/* Relative time skeleton */}
+      <Skeleton className="h-3 w-12 shrink-0" />
+    </div>
+  );
+}
+
+function RequestListSkeleton({ rows = 5 }: { rows?: number }) {
+  return (
+    <div className="flex flex-1 flex-col">
+      <ScrollArea className="flex-1">
+        <div className="divide-y">
+          {Array.from({ length: rows }).map((_, index) => (
+            <RequestRowSkeleton key={index} />
+          ))}
+        </div>
+      </ScrollArea>
+    </div>
+  );
+}
+
 export function RequestList({
   requests,
   totalPages,
@@ -49,16 +87,35 @@ export function RequestList({
   onPageChange,
   onRequestClick,
   isLoading = false,
+  hasActiveFilters = false,
+  onClearFilters,
 }: RequestListProps) {
   if (isLoading) {
-    return (
-      <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
-        <p className="text-sm text-muted-foreground">Loading requests...</p>
-      </div>
-    );
+    return <RequestListSkeleton rows={5} />;
   }
 
   if (requests.length === 0) {
+    // Show different empty state based on whether filters are active
+    if (hasActiveFilters) {
+      return (
+        <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
+          <p className="text-sm text-muted-foreground">
+            No requests match your filters
+          </p>
+          {onClearFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mt-2"
+              onClick={onClearFilters}
+            >
+              Clear filters
+            </Button>
+          )}
+        </div>
+      );
+    }
+
     return (
       <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
         <p className="text-sm text-muted-foreground">No requests yet</p>

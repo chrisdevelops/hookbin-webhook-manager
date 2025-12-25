@@ -17,6 +17,13 @@ interface ApiError {
   message: string;
 }
 
+export interface RequestFilters {
+  search?: string;
+  method?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
 class ApiClient {
   private async request<T>(
     endpoint: string,
@@ -108,10 +115,27 @@ class ApiClient {
   // Requests
   async getRequests(
     webhookId: string,
-    page: number = 1
+    page: number = 1,
+    filters: RequestFilters = {}
   ): Promise<PaginatedRequestsResponse> {
+    const params = new URLSearchParams();
+    params.set("page", String(page));
+
+    if (filters.search) {
+      params.set("search", filters.search);
+    }
+    if (filters.method) {
+      params.set("method", filters.method);
+    }
+    if (filters.startDate) {
+      params.set("startDate", filters.startDate);
+    }
+    if (filters.endDate) {
+      params.set("endDate", filters.endDate);
+    }
+
     return this.request<PaginatedRequestsResponse>(
-      `/webhooks/${webhookId}/requests?page=${page}`
+      `/webhooks/${webhookId}/requests?${params.toString()}`
     );
   }
 

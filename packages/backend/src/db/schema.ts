@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
 
 export const webhooks = sqliteTable("webhooks", {
   id: text("id").primaryKey(),
@@ -23,7 +23,14 @@ export const requests = sqliteTable("requests", {
   sourceIp: text("source_ip").notNull(),
   createdAt: text("created_at").notNull(),
   isFavorite: integer("is_favorite", { mode: "boolean" }).notNull().default(false),
-});
+}, (table) => ({
+  // Indexes for search and filter performance
+  webhookIdIdx: index("requests_webhook_id_idx").on(table.webhookId),
+  methodIdx: index("requests_method_idx").on(table.method),
+  createdAtIdx: index("requests_created_at_idx").on(table.createdAt),
+  // Composite index for common query: filter by webhook and sort by date
+  webhookIdCreatedAtIdx: index("requests_webhook_id_created_at_idx").on(table.webhookId, table.createdAt),
+}));
 
 export type Webhook = typeof webhooks.$inferSelect;
 export type NewWebhook = typeof webhooks.$inferInsert;
