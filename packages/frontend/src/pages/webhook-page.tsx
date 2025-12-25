@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   MoreHorizontalIcon,
@@ -30,10 +30,23 @@ import { useWebhooks } from "@/context/webhook-context";
 import { getWebhookUrl, getWebhookStatus, type WebhookRequest } from "@/types";
 import { WebhookHeader } from "@/components/webhook/webhook-header";
 import { RequestList } from "@/components/webhook/request-list";
+import { RequestFilters } from "@/components/webhook/request-filters";
+import { useDebounce } from "@/hooks/use-debounce";
 
 export function WebhookPage() {
   const { webhookId } = useParams<{ webhookId: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Read filter state from URL params
+  const search = searchParams.get("search") || "";
+  const method = searchParams.get("method") || "";
+  const startDate = searchParams.get("startDate") || "";
+  const endDate = searchParams.get("endDate") || "";
+
+  // Debounce search for API calls
+  const debouncedSearch = useDebounce(search, 300);
+
   const {
     getWebhook,
     updateWebhook,
@@ -54,14 +67,20 @@ export function WebhookPage() {
 
   const webhook = webhookId ? getWebhook(webhookId) : undefined;
 
-  // Load requests when webhook or page changes
+  // Load requests when webhook, page, or filters change
   useEffect(() => {
     if (!webhookId) return;
 
     const loadRequests = async () => {
       setLoadingRequests(true);
       try {
-        const result = await getRequests(webhookId, currentPage);
+        const filters = {
+          search: debouncedSearch || undefined,
+          method: method || undefined,
+          startDate: startDate || undefined,
+          endDate: endDate || undefined,
+        };
+        const result = await getRequests(webhookId, currentPage, filters);
         setRequests(result.requests);
         setTotalPages(result.totalPages);
         setTotalCount(result.totalCount);
@@ -73,7 +92,7 @@ export function WebhookPage() {
     };
 
     loadRequests();
-  }, [webhookId, currentPage, getRequests]);
+  }, [webhookId, currentPage, debouncedSearch, method, startDate, endDate, getRequests]);
 
   // Reset to page 1 when webhook changes
   useEffect(() => {
@@ -219,6 +238,76 @@ export function WebhookPage() {
     [webhookId, navigate]
   );
 
+  // Filter change handlers that update URL params
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      setSearchParams((prev) => {
+        const params = new URLSearchParams(prev);
+        if (value) {
+          params.set("search", value);
+        } else {
+          params.delete("search");
+        }
+        return params;
+      });
+      setCurrentPage(1);
+    },
+    [setSearchParams]
+  );
+
+  const handleMethodChange = useCallback(
+    (value: string) => {
+      setSearchParams((prev) => {
+        const params = new URLSearchParams(prev);
+        if (value) {
+          params.set("method", value);
+        } else {
+          params.delete("method");
+        }
+        return params;
+      });
+      setCurrentPage(1);
+    },
+    [setSearchParams]
+  );
+
+  const handleStartDateChange = useCallback(
+    (value: string) => {
+      setSearchParams((prev) => {
+        const params = new URLSearchParams(prev);
+        if (value) {
+          params.set("startDate", value);
+        } else {
+          params.delete("startDate");
+        }
+        return params;
+      });
+      setCurrentPage(1);
+    },
+    [setSearchParams]
+  );
+
+  const handleEndDateChange = useCallback(
+    (value: string) => {
+      setSearchParams((prev) => {
+        const params = new URLSearchParams(prev);
+        if (value) {
+          params.set("endDate", value);
+        } else {
+          params.delete("endDate");
+        }
+        return params;
+      });
+      setCurrentPage(1);
+    },
+    [setSearchParams]
+  );
+
+  const handleClearFilters = useCallback(() => {
+    setSearchParams(new URLSearchParams());
+    setCurrentPage(1);
+  }, [setSearchParams]);
+
   if (!webhook) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -274,6 +363,18 @@ export function WebhookPage() {
           </DropdownMenu>
         </div>
       </div>
+
+      <RequestFilters
+        search={search}
+        method={method}
+        startDate={startDate}
+        endDate={endDate}
+        onSearchChange={handleSearchChange}
+        onMethodChange={handleMethodChange}
+        onStartDateChange={handleStartDateChange}
+        onEndDateChange={handleEndDateChange}
+        onClearFilters={handleClearFilters}
+      />
 
       <RequestList
         requests={requests}
