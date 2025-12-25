@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { WebhookProvider } from "@/context/webhook-context";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export function AppLayout() {
   return (
@@ -18,6 +19,7 @@ export function AppLayout() {
           <SidebarInset>
             <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4">
               <SidebarTrigger className="-ml-1" />
+              <ThemeToggle className="ml-auto" />
             </header>
             <main className="flex-1 overflow-auto">
               <Outlet />

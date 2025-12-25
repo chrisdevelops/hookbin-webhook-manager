@@ -18,9 +18,9 @@ interface WebhookHeaderProps {
 
 function StatusIndicator({ status }: { status: WebhookStatus }) {
   const config = {
-    active: { color: "bg-green-500", label: "Active" },
-    "active-unread": { color: "bg-yellow-500", label: "Active" },
-    inactive: { color: "bg-red-500", label: "Inactive" },
+    active: { color: "bg-green-500 dark:bg-green-400", label: "Active" },
+    "active-unread": { color: "bg-yellow-500 dark:bg-yellow-400", label: "Active" },
+    inactive: { color: "bg-red-500 dark:bg-red-400", label: "Inactive" },
   };
 
   const { color, label } = config[status];
@@ -148,7 +148,7 @@ export function WebhookHeader({
       )}
 
       <div className="flex items-center gap-2">
-        <code className="rounded bg-muted px-2 py-1 font-mono text-xs">
+        <code className="rounded bg-muted dark:bg-input px-2 py-1 font-mono text-xs text-foreground">
           {url}
         </code>
         <Button variant="ghost" size="icon-xs" onClick={handleCopyUrl}>
