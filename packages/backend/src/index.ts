@@ -6,6 +6,7 @@ import createSqliteStore from "better-sqlite3-session-store";
 import webhooksRouter from "./routes/webhooks.js";
 import requestsRouter from "./routes/requests.js";
 import ingestionRouter from "./routes/ingestion.js";
+import authRouter from "./routes/auth.js";
 import { sseManager } from "./lib/sse-manager.js";
 import { sqlite } from "./db/index.js";
 
@@ -82,6 +83,7 @@ app.get("/api/events", (req, res) => {
 });
 
 // API routes
+app.use("/api/auth", authRouter);
 app.use("/api/webhooks", webhooksRouter);
 app.use("/api", requestsRouter);
 
