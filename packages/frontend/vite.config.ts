@@ -11,7 +11,7 @@ export default defineConfig({
     {
       name: "spa-fallback",
       configureServer(server) {
-        server.middlewares.use((req, res, next) => {
+        server.middlewares.use((req, _res, next) => {
           const url = req.url || ""
 
           // Skip if path has file extension (static assets)
