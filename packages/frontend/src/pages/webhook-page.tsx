@@ -32,6 +32,7 @@ import { WebhookHeader } from "@/components/webhook/webhook-header";
 import { RequestList } from "@/components/webhook/request-list";
 import { RequestFilters } from "@/components/webhook/request-filters";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useDelayedLoading } from "@/hooks/use-delayed-loading";
 
 export function WebhookPage() {
   const { webhookId } = useParams<{ webhookId: string }>();
@@ -64,6 +65,9 @@ export function WebhookPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [loadingRequests, setLoadingRequests] = useState(false);
+
+  // Delay showing loading skeleton to prevent flash for quick responses
+  const showLoadingSkeleton = useDelayedLoading(loadingRequests, 150);
 
   const webhook = webhookId ? getWebhook(webhookId) : undefined;
 
@@ -383,7 +387,7 @@ export function WebhookPage() {
         currentPage={currentPage}
         onPageChange={setCurrentPage}
         onRequestClick={handleRequestClick}
-        isLoading={loadingRequests}
+        isLoading={showLoadingSkeleton}
         hasActiveFilters={Boolean(search || method || startDate || endDate)}
         onClearFilters={handleClearFilters}
       />
