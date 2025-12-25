@@ -7,7 +7,7 @@ import {
   type ReactNode,
 } from "react";
 import type { Webhook, WebhookRequest } from "@/types";
-import { api } from "@/lib/api";
+import { api, type RequestFilters } from "@/lib/api";
 
 interface PaginatedRequests {
   requests: WebhookRequest[];
@@ -34,7 +34,7 @@ interface WebhookContextType {
   clearWebhookHistory: (id: string) => Promise<void>;
   markWebhookViewed: (id: string) => Promise<void>;
   setCurrentWebhook: (id: string | null) => void;
-  getRequests: (webhookId: string, page: number) => Promise<PaginatedRequests>;
+  getRequests: (webhookId: string, page: number, filters?: RequestFilters) => Promise<PaginatedRequests>;
   getRequestById: (requestId: string) => Promise<WebhookRequest | undefined>;
 }
 
@@ -193,8 +193,8 @@ export function WebhookProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const getRequests = useCallback(
-    async (webhookId: string, page: number): Promise<PaginatedRequests> => {
-      const response = await api.getRequests(webhookId, page);
+    async (webhookId: string, page: number, filters?: RequestFilters): Promise<PaginatedRequests> => {
+      const response = await api.getRequests(webhookId, page, filters);
       return {
         requests: response.requests,
         totalPages: response.pagination.totalPages,
