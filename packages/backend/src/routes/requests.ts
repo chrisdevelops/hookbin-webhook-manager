@@ -98,10 +98,12 @@ router.get("/webhooks/:webhookId/requests", async (req, res) => {
 
     // Date range filters (createdAt is stored as ISO string)
     if (startDate) {
-      conditions.push(gte(schema.requests.createdAt, startDate));
+      // Add time component to start at the very beginning of the day
+      const startDateWithTime = startDate.includes("T") ? startDate : `${startDate}T00:00:00.000Z`;
+      conditions.push(gte(schema.requests.createdAt, startDateWithTime));
     }
     if (endDate) {
-      // Add time component to include the entire end date
+      // Add time component to include the entire end date (end of day)
       const endDateWithTime = endDate.includes("T") ? endDate : `${endDate}T23:59:59.999Z`;
       conditions.push(lte(schema.requests.createdAt, endDateWithTime));
     }
