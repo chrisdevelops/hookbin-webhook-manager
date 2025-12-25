@@ -1,3 +1,4 @@
+import { type RefObject } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Search01Icon, Cancel01Icon } from "@hugeicons/core-free-icons";
 import { Input } from "@/components/ui/input";
@@ -32,6 +33,7 @@ export interface RequestFiltersProps {
   onEndDateChange: (value: string) => void;
   onClearFilters?: () => void;
   className?: string;
+  searchInputRef?: RefObject<HTMLInputElement | null>;
 }
 
 export function RequestFilters({
@@ -45,6 +47,7 @@ export function RequestFilters({
   onEndDateChange,
   onClearFilters,
   className,
+  searchInputRef,
 }: RequestFiltersProps) {
   const hasActiveFilters = search || method || startDate || endDate;
 
@@ -63,6 +66,7 @@ export function RequestFilters({
           className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground pointer-events-none"
         />
         <Input
+          ref={searchInputRef}
           type="text"
           placeholder="Search headers and body..."
           value={search}

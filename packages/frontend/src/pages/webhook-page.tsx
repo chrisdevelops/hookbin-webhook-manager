@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -68,6 +68,9 @@ export function WebhookPage() {
 
   // Delay showing loading skeleton to prevent flash for quick responses
   const showLoadingSkeleton = useDelayedLoading(loadingRequests, 150);
+
+  // Ref for search input to enable keyboard shortcut focus
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const webhook = webhookId ? getWebhook(webhookId) : undefined;
 
@@ -174,6 +177,21 @@ export function WebhookPage() {
       console.log("SSE disconnected for webhook:", webhookId);
     };
   }, [webhookId, currentPage, totalCount]);
+
+  // Keyboard shortcut: Cmd+K (Mac) or Ctrl+K (Windows/Linux) to focus search
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === "k") {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
 
   const handleNameChange = useCallback(
     async (name: string) => {
@@ -378,6 +396,7 @@ export function WebhookPage() {
         onStartDateChange={handleStartDateChange}
         onEndDateChange={handleEndDateChange}
         onClearFilters={handleClearFilters}
+        searchInputRef={searchInputRef}
       />
 
       <RequestList
