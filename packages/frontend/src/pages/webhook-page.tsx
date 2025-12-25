@@ -384,6 +384,8 @@ export function WebhookPage() {
         onPageChange={setCurrentPage}
         onRequestClick={handleRequestClick}
         isLoading={loadingRequests}
+        hasActiveFilters={Boolean(search || method || startDate || endDate)}
+        onClearFilters={handleClearFilters}
       />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

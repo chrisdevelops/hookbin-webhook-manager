@@ -23,6 +23,8 @@ interface RequestListProps {
   onPageChange: (page: number) => void;
   onRequestClick: (requestId: string) => void;
   isLoading?: boolean;
+  hasActiveFilters?: boolean;
+  onClearFilters?: () => void;
 }
 
 function MethodBadge({ method }: { method: string }) {
@@ -49,6 +51,8 @@ export function RequestList({
   onPageChange,
   onRequestClick,
   isLoading = false,
+  hasActiveFilters = false,
+  onClearFilters,
 }: RequestListProps) {
   if (isLoading) {
     return (
@@ -59,6 +63,27 @@ export function RequestList({
   }
 
   if (requests.length === 0) {
+    // Show different empty state based on whether filters are active
+    if (hasActiveFilters) {
+      return (
+        <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
+          <p className="text-sm text-muted-foreground">
+            No requests match your filters
+          </p>
+          {onClearFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mt-2"
+              onClick={onClearFilters}
+            >
+              Clear filters
+            </Button>
+          )}
+        </div>
+      );
+    }
+
     return (
       <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
         <p className="text-sm text-muted-foreground">No requests yet</p>
