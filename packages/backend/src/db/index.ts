@@ -1,4 +1,4 @@
-import Database from "better-sqlite3";
+import Database, { type Database as DatabaseType } from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import * as schema from "./schema.js";
 import { existsSync, mkdirSync } from "fs";
@@ -12,7 +12,7 @@ if (!existsSync(dataDir)) {
   mkdirSync(dataDir, { recursive: true });
 }
 
-const sqlite = new Database(DB_PATH);
+const sqlite: DatabaseType = new Database(DB_PATH);
 
 // Enable WAL mode for better performance
 sqlite.pragma("journal_mode = WAL");
@@ -78,3 +78,6 @@ try {
 
 export const db = drizzle(sqlite, { schema });
 export { schema };
+
+// Export the raw sqlite instance for session store
+export { sqlite };

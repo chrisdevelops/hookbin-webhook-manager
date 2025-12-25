@@ -1,19 +1,58 @@
 import express from "express";
 import cors from "cors";
+import session from "express-session";
 import { v4 as uuidv4 } from "uuid";
+import createSqliteStore from "better-sqlite3-session-store";
 import webhooksRouter from "./routes/webhooks.js";
 import requestsRouter from "./routes/requests.js";
 import ingestionRouter from "./routes/ingestion.js";
 import { sseManager } from "./lib/sse-manager.js";
+import { sqlite } from "./db/index.js";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Session store configuration
+const SqliteStore = createSqliteStore(session);
+const isProduction = process.env.NODE_ENV === "production";
+
+// Validate SESSION_SECRET when auth is enabled
+if (process.env.AUTH_ENABLED === "true" && !process.env.SESSION_SECRET) {
+  console.error("FATAL: SESSION_SECRET environment variable is required when AUTH_ENABLED=true");
+  process.exit(1);
+}
+
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: isProduction ? undefined : true,
+  credentials: true, // Allow cookies to be sent with requests
+}));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.text({ limit: "10mb" }));
 app.use(express.raw({ limit: "10mb", type: "*/*" }));
+
+// Session middleware (always enabled for consistent behavior)
+app.use(
+  session({
+    store: new SqliteStore({
+      client: sqlite,
+      expired: {
+        clear: true,
+        intervalMs: 900000, // Clear expired sessions every 15 minutes
+      },
+    }),
+    secret: process.env.SESSION_SECRET || "development-secret-change-in-production",
+    name: "hookbin.sid",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: "strict",
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    },
+  })
+);
 
 // Health check
 app.get("/health", (_req, res) => {
