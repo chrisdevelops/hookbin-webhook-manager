@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react"
+import React, { type FormEvent } from "react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -18,10 +18,10 @@ interface LoginFormProps {
 
 function LoginForm({ className, onSuccess }: LoginFormProps) {
   const { login, error: authError } = useAuth()
-  const [username, setUsername] = useState("")
-  const [password, setPassword] = useState("")
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [formError, setFormError] = useState<string | null>(null)
+  const [username, setUsername] = React.useState("")
+  const [password, setPassword] = React.useState("")
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [formError, setFormError] = React.useState<string | null>(null)
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()

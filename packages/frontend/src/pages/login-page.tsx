@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 
 import { LoginForm } from "@/components/auth/LoginForm";
@@ -8,7 +8,7 @@ export function LoginPage() {
   const navigate = useNavigate();
   const { isAuthenticated, authEnabled, isLoading } = useAuth();
 
-  useEffect(() => {
+  React.useEffect(() => {
     // If auth is disabled or user is already authenticated, redirect to home
     if (!isLoading && (!authEnabled || isAuthenticated)) {
       navigate("/", { replace: true });

@@ -1,11 +1,4 @@
-import {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  useEffect,
-  type ReactNode,
-} from "react";
+import React, { type ReactNode } from "react";
 import { AUTH_UNAUTHORIZED_EVENT } from "@/lib/api";
 
 interface User {
@@ -38,16 +31,16 @@ interface AuthContextType {
   refreshAuthStatus: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | null>(null);
+const AuthContext = React.createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [authEnabled, setAuthEnabled] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [authEnabled, setAuthEnabled] = React.useState(false);
+  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+  const [user, setUser] = React.useState<User | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
 
-  const refreshAuthStatus = useCallback(async () => {
+  const refreshAuthStatus = React.useCallback(async () => {
     try {
       setError(null);
       const response = await fetch("/api/auth/status");
@@ -69,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  useEffect(() => {
+  React.useEffect(() => {
     const checkAuthStatus = async () => {
       setIsLoading(true);
       await refreshAuthStatus();
@@ -79,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [refreshAuthStatus]);
 
   // Listen for 401 Unauthorized events from API client
-  useEffect(() => {
+  React.useEffect(() => {
     const handleUnauthorized = () => {
       // Clear authentication state when session expires
       setIsAuthenticated(false);
@@ -92,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const login = useCallback(async (username: string, password: string) => {
+  const login = React.useCallback(async (username: string, password: string) => {
     try {
       setError(null);
       const response = await fetch("/api/auth/login", {
@@ -120,7 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const logout = useCallback(async () => {
+  const logout = React.useCallback(async () => {
     try {
       setError(null);
       const response = await fetch("/api/auth/logout", {
@@ -158,7 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
+  const context = React.useContext(AuthContext);
   if (!context) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
