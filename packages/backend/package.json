@@ -13,16 +13,22 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "better-sqlite3": "^11.7.0",
+    "better-sqlite3-session-store": "^0.1.0",
     "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
     "drizzle-orm": "^0.38.4",
     "express": "^5.0.1",
+    "express-session": "^1.18.2",
     "uuid": "^11.1.0"
   },
   "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
     "@types/better-sqlite3": "^7.6.12",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
+    "@types/express-session": "^1.18.2",
     "@types/node": "^24.10.1",
     "@types/uuid": "^10.0.0",
     "drizzle-kit": "^0.30.5",

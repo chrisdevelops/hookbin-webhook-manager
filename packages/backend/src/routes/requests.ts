@@ -3,13 +3,14 @@ import { v4 as uuidv4 } from "uuid";
 import { eq, desc, sql, and, or, like, gte, lte } from "drizzle-orm";
 import { db, schema } from "../db/index.js";
 import { sseManager } from "../lib/sse-manager.js";
+import { requireAuth } from "../middleware/auth.js";
 
 const router = Router();
 
 const PAGE_SIZE = 50;
 
 // SSE endpoint for real-time webhook request updates
-router.get("/webhooks/:webhookId/events", async (req, res) => {
+router.get("/webhooks/:webhookId/events", requireAuth, async (req, res) => {
   const { webhookId } = req.params;
 
   // Verify webhook exists
@@ -52,7 +53,7 @@ router.get("/webhooks/:webhookId/events", async (req, res) => {
 });
 
 // Get requests for a webhook with pagination, search, and filters
-router.get("/webhooks/:webhookId/requests", async (req, res) => {
+router.get("/webhooks/:webhookId/requests", requireAuth, async (req, res) => {
   try {
     const { webhookId } = req.params;
     const page = Math.max(1, parseInt(req.query.page as string) || 1);
@@ -151,7 +152,7 @@ router.get("/webhooks/:webhookId/requests", async (req, res) => {
 });
 
 // Get single request
-router.get("/requests/:requestId", async (req, res) => {
+router.get("/requests/:requestId", requireAuth, async (req, res) => {
   try {
     const { requestId } = req.params;
 
@@ -177,7 +178,7 @@ router.get("/requests/:requestId", async (req, res) => {
 });
 
 // Toggle favorite status of a request
-router.patch("/requests/:requestId/favorite", async (req, res) => {
+router.patch("/requests/:requestId/favorite", requireAuth, async (req, res) => {
   try {
     const { requestId } = req.params;
     const { isFavorite } = req.body;
@@ -229,7 +230,7 @@ router.patch("/requests/:requestId/favorite", async (req, res) => {
 });
 
 // Export single request as JSON
-router.get("/requests/:requestId/export", async (req, res) => {
+router.get("/requests/:requestId/export", requireAuth, async (req, res) => {
   try {
     const { requestId } = req.params;
 

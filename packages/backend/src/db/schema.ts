@@ -32,7 +32,35 @@ export const requests = sqliteTable("requests", {
   webhookIdCreatedAtIdx: index("requests_webhook_id_created_at_idx").on(table.webhookId, table.createdAt),
 }));
 
+export const users = sqliteTable("users", {
+  id: text("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+}, (table) => ({
+  usernameIdx: index("users_username_idx").on(table.username),
+}));
+
+export const apiKeys = sqliteTable("api_keys", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  keyHash: text("key_hash").notNull().unique(),
+  name: text("name").notNull(),
+  createdAt: text("created_at").notNull(),
+  lastUsedAt: text("last_used_at"),
+}, (table) => ({
+  userIdIdx: index("api_keys_user_id_idx").on(table.userId),
+  keyHashIdx: index("api_keys_key_hash_idx").on(table.keyHash),
+}));
+
 export type Webhook = typeof webhooks.$inferSelect;
 export type NewWebhook = typeof webhooks.$inferInsert;
 export type Request = typeof requests.$inferSelect;
 export type NewRequest = typeof requests.$inferInsert;
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
+export type ApiKey = typeof apiKeys.$inferSelect;
+export type NewApiKey = typeof apiKeys.$inferInsert;
