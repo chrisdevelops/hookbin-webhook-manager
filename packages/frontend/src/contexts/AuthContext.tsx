@@ -6,6 +6,7 @@ import {
   useEffect,
   type ReactNode,
 } from "react";
+import { AUTH_UNAUTHORIZED_EVENT } from "@/lib/api";
 
 interface User {
   id: number;
@@ -76,6 +77,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
     checkAuthStatus();
   }, [refreshAuthStatus]);
+
+  // Listen for 401 Unauthorized events from API client
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      // Clear authentication state when session expires
+      setIsAuthenticated(false);
+      setUser(null);
+    };
+
+    window.addEventListener(AUTH_UNAUTHORIZED_EVENT, handleUnauthorized);
+    return () => {
+      window.removeEventListener(AUTH_UNAUTHORIZED_EVENT, handleUnauthorized);
+    };
+  }, []);
 
   const login = useCallback(async (username: string, password: string) => {
     try {

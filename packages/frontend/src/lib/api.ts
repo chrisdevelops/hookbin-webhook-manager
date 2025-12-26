@@ -2,6 +2,17 @@ import type { Webhook, WebhookRequest } from "@/types";
 
 const API_BASE = "/api";
 
+// Custom event for handling 401 Unauthorized responses globally
+export const AUTH_UNAUTHORIZED_EVENT = "auth:unauthorized";
+
+/**
+ * Dispatches a custom event when a 401 response is received.
+ * AuthContext listens for this event to handle session expiration.
+ */
+function handleUnauthorized(): void {
+  window.dispatchEvent(new CustomEvent(AUTH_UNAUTHORIZED_EVENT));
+}
+
 interface PaginatedRequestsResponse {
   requests: WebhookRequest[];
   pagination: {
@@ -38,6 +49,11 @@ class ApiClient {
     });
 
     if (!response.ok) {
+      // Handle 401 Unauthorized globally - session expired or invalid
+      if (response.status === 401) {
+        handleUnauthorized();
+      }
+
       const error: ApiError = await response.json().catch(() => ({
         error: "unknown_error",
         message: response.statusText,
