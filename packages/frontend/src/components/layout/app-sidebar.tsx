@@ -30,6 +30,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useWebhooks } from "@/context/webhook-context";
+import { useAuth } from "@/contexts/AuthContext";
 import { getWebhookUrl, getWebhookStatus } from "@/types";
 import { formatRelativeTime } from "@/lib/format";
 
@@ -58,7 +59,17 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const { webhookId } = useParams();
   const { webhooks, isLoading, error, createWebhook } = useWebhooks();
+  const { user, logout } = useAuth();
   const [isCreating, setIsCreating] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/login");
+    } catch {
+      toast.error("Failed to log out");
+    }
+  };
 
   const handleCopyUrl = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
@@ -193,10 +204,12 @@ export function AppSidebar() {
               >
                 <Avatar className="h-6 w-6">
                   <AvatarImage src="" />
-                  <AvatarFallback className="text-[10px]">U</AvatarFallback>
+                  <AvatarFallback className="text-[10px]">
+                    {user?.username?.charAt(0).toUpperCase() ?? "U"}
+                  </AvatarFallback>
                 </Avatar>
                 <span className="flex-1 truncate text-left text-xs">
-                  Local User
+                  {user?.username ?? "User"}
                 </span>
               </button>
             )}
@@ -207,7 +220,7 @@ export function AppSidebar() {
               Settings
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout}>
               <HugeiconsIcon icon={Logout01Icon} strokeWidth={2} />
               Log out
             </DropdownMenuItem>
