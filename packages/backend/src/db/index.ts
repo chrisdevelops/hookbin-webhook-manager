@@ -42,8 +42,28 @@ sqlite.exec(`
     is_favorite INTEGER NOT NULL DEFAULT 0
   );
 
+  CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY,
+    username TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS api_keys (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    key_hash TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    last_used_at TEXT
+  );
+
   CREATE INDEX IF NOT EXISTS idx_requests_webhook_id ON requests(webhook_id);
   CREATE INDEX IF NOT EXISTS idx_requests_created_at ON requests(created_at);
+  CREATE INDEX IF NOT EXISTS users_username_idx ON users(username);
+  CREATE INDEX IF NOT EXISTS api_keys_user_id_idx ON api_keys(user_id);
+  CREATE INDEX IF NOT EXISTS api_keys_key_hash_idx ON api_keys(key_hash);
 `);
 
 // Migration: Add last_viewed_at column if it doesn't exist
